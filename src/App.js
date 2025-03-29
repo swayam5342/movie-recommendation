@@ -7,7 +7,9 @@ const MovieList = () => {
   const [suggestedMovie, setSuggestedMovie] = useState(null);
   const [selectedGenre, setSelectedGenre] = useState("");
   const [selectedActor, setSelectedActor] = useState("");
-  const [selectedStatus, setSelectedStatus] = useState("all"); // New filter state
+  const [actorInput, setActorInput] = useState(""); // Input field for actor search
+  const [actorSuggestions, setActorSuggestions] = useState([]); // Suggested actors
+  const [selectedStatus, setSelectedStatus] = useState("all");
   const [uniqueGenres, setUniqueGenres] = useState([]);
   const [uniqueActors, setUniqueActors] = useState([]);
 
@@ -62,6 +64,25 @@ const MovieList = () => {
     }
   };
 
+  const handleActorInputChange = (e) => {
+    const value = e.target.value.toLowerCase();
+    setActorInput(e.target.value);
+
+    if (value.trim() === "") {
+      setActorSuggestions([]);
+    } else {
+      setActorSuggestions(
+        uniqueActors.filter((actor) => actor.toLowerCase().includes(value))
+      );
+    }
+  };
+
+  const selectActor = (actor) => {
+    setSelectedActor(actor);
+    setActorInput(actor); // Show selected actor in input
+    setActorSuggestions([]); // Hide suggestions
+  };
+
   const filteredMovies = movies.filter((movie) => {
     return (
       movie.title.toLowerCase().includes(search.toLowerCase()) &&
@@ -107,18 +128,28 @@ const MovieList = () => {
             ))}
           </select>
 
-          <select
-            className="p-2 rounded bg-gray-700 text-white"
-            value={selectedActor}
-            onChange={(e) => setSelectedActor(e.target.value)}
-          >
-            <option value="">All Actors</option>
-            {uniqueActors.map((actor) => (
-              <option key={actor} value={actor}>
-                {actor}
-              </option>
-            ))}
-          </select>
+          <div className="relative">
+            <input
+              type="text"
+              placeholder="Search Actor..."
+              className="p-2 rounded bg-gray-700 text-white focus:outline-none w-48"
+              value={actorInput}
+              onChange={handleActorInputChange}
+            />
+            {actorSuggestions.length > 0 && (
+              <ul className="absolute bg-gray-800 border border-gray-700 rounded-lg mt-1 w-48 max-h-40 overflow-y-auto">
+                {actorSuggestions.map((actor) => (
+                  <li
+                    key={actor}
+                    className="p-2 cursor-pointer hover:bg-gray-700"
+                    onClick={() => selectActor(actor)}
+                  >
+                    {actor}
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
 
           <input
             type="text"
@@ -145,14 +176,6 @@ const MovieList = () => {
           Suggest a Movie
         </button>
 
-        {suggestedMovie && (
-          <div className="mb-6 p-4 bg-gray-800 rounded-2xl text-center">
-            <h3 className="text-lg font-bold text-yellow-300">
-              Suggested Movie: {suggestedMovie.title}
-            </h3>
-          </div>
-        )}
-
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
           {filteredMovies.map((movie) => (
             <div key={movie.id} className={`bg-gray-800 p-4 rounded-2xl shadow-lg transition transform hover:scale-105 ${movie.watched ? "opacity-60" : ""}`}>
@@ -164,17 +187,9 @@ const MovieList = () => {
               <p className="mt-2 text-justify text-gray-300 text-sm">{movie.description}</p>
               <p className="text-gray-300 text-sm mt-2">Genre: {movie.genre}</p>
               <p className="text-gray-300 text-sm">Actors: {movie.actors}</p>
-              {movie.imdb_id && (
-                <a href={`https://www.imdb.com/title/${movie.imdb_id}`} target="_blank" rel="noopener noreferrer" className="text-blue-400 hover:underline mt-2 block text-center font-semibold">View on IMDb</a>
-              )}
-              <div className="flex gap-2 mt-4">
-                <button onClick={() => toggleWatched(movie.id)} className={`flex-1 px-4 py-2 rounded-lg ${movie.watched ? "bg-red-500 hover:bg-red-700" : "bg-green-500 hover:bg-green-700"} text-white font-semibold transition-all duration-300`}>
-                  {movie.watched ? "Mark as Unwatched" : "Mark as Watched"}
-                </button>
-                <button onClick={() => deleteMovie(movie.id)} className="px-4 py-2 bg-red-600 hover:bg-red-800 rounded-lg text-white font-semibold">
-                  Delete
-                </button>
-              </div>
+              <button onClick={() => toggleWatched(movie.id)} className={`flex-1 px-4 py-2 rounded-lg ${movie.watched ? "bg-red-500 hover:bg-red-700" : "bg-green-500 hover:bg-green-700"} text-white font-semibold transition-all duration-300`}>
+                {movie.watched ? "Mark as Unwatched" : "Mark as Watched"}
+              </button>
             </div>
           ))}
         </div>
