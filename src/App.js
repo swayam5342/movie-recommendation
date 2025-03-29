@@ -2,45 +2,49 @@ import React, { useEffect, useState } from "react";
 
 const MovieList = () => {
   const [movies, setMovies] = useState([]);
-  const [watchedMovies, setWatchedMovies] = useState(new Set());
   const [search, setSearch] = useState("");
   const [newMovie, setNewMovie] = useState("");
+  const [suggestedMovie, setSuggestedMovie] = useState(null);
 
   useEffect(() => {
+    fetchMovies();
+  }, []);
+
+  const fetchMovies = () => {
     fetch("http://localhost:8000/movies/")
       .then((response) => response.json())
       .then((data) => setMovies(data));
-  }, []);
+  };
 
   const toggleWatched = async (id) => {
     await fetch(`http://localhost:8000/movies/${id}/watched`, { method: "PUT" });
-    setWatchedMovies((prev) => {
-      const newSet = new Set(prev);
-      if (newSet.has(id)) {
-        newSet.delete(id);
-      } else {
-        newSet.add(id);
-      }
-      return newSet;
-    });
+    fetchMovies();
+  };
+
+  const deleteMovie = async (id) => {
+    await fetch(`http://localhost:8000/movies/${id}/`, { method: "DELETE" });
+    fetchMovies();
   };
 
   const addMovie = async () => {
     if (!newMovie.trim()) return;
     await fetch(`http://localhost:8000/movies/?title=${newMovie}`, { method: "POST" });
     setNewMovie("");
-    window.location.reload();
+    fetchMovies();
   };
 
-  const deleteMovie = async (id) => {
-    await fetch(`http://localhost:8000/movies/${id}/`, { method: "DELETE" });
-    setMovies(movies.filter(movie => movie.id !== id));
+  const suggestMovie = () => {
+    const toWatchMovies = movies.filter(movie => !movie.watched);
+    if (toWatchMovies.length > 0) {
+      const randomMovie = toWatchMovies[Math.floor(Math.random() * toWatchMovies.length)];
+      setSuggestedMovie(randomMovie);
+    }
   };
 
   return (
-    <div className="min-h-screen bg-gray-900 text-white">
-      <nav className="flex justify-between items-center p-6 bg-gray-800 shadow-md">
-        <h1 className="text-3xl font-bold text-blue-400">Movie Recommendations</h1>
+    <div className="min-h-screen bg-gray-900 text-white p-6">
+      <nav className="fixed top-0 left-0 w-full bg-gray-800 shadow-lg p-4 flex justify-between items-center z-50">
+        <h1 className="text-2xl font-bold text-blue-400">Movie Recommendations</h1>
         <div className="flex gap-4">
           <input
             type="text"
@@ -56,51 +60,58 @@ const MovieList = () => {
             value={newMovie}
             onChange={(e) => setNewMovie(e.target.value)}
           />
-          <button onClick={addMovie} className="px-4 py-2 bg-blue-500 rounded text-white hover:bg-blue-700">Add</button>
+          <button onClick={addMovie} className="px-4 py-2 bg-blue-500 hover:bg-blue-700 rounded-lg text-white font-semibold">Add</button>
         </div>
       </nav>
-      <div className="p-6 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-        {movies.filter(movie => movie.title.toLowerCase().includes(search.toLowerCase())).map((movie) => (
-          <div
-            key={movie.id}
-            className={`bg-gray-800 p-4 rounded-2xl shadow-lg transition transform hover:scale-105 ${watchedMovies.has(movie.id) ? "opacity-60" : ""}`}
-          >
-            {movie.poster_url && (
-              <img
-                src={movie.poster_url}
-                alt={movie.title}
-                className="w-full h-96 object-cover rounded-lg mb-4 shadow-md"
-              />
-            )}
-            <h2 className="text-xl font-semibold text-center text-blue-300">{movie.title}</h2>
-            <p className="text-gray-400 text-sm text-center mb-2">{movie.type}</p>
-            <p className="mt-2 text-justify text-gray-300 text-sm">{movie.description}</p>
-            {movie.imdb_id && (
-              <a
-                href={`https://www.imdb.com/title/${movie.imdb_id}`}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-blue-400 hover:underline mt-2 block text-center font-semibold"
-              >
-                View on IMDb
-              </a>
-            )}
-            <div className="flex gap-2 mt-4">
-              <button
-                onClick={() => toggleWatched(movie.id)}
-                className={`flex-1 px-4 py-2 rounded-lg text-white font-semibold transition-all duration-300 ${watchedMovies.has(movie.id) ? "bg-red-500 hover:bg-red-700" : "bg-green-500 hover:bg-green-700"}`}
-              >
-                {watchedMovies.has(movie.id) ? "Mark as Unwatched" : "Mark as Watched"}
-              </button>
-              <button
-                onClick={() => deleteMovie(movie.id)}
-                className="px-4 py-2 bg-red-600 hover:bg-red-800 rounded-lg text-white font-semibold"
-              >
-                Delete
-              </button>
-            </div>
+      <div className="pt-20">
+        <h2 className="text-2xl font-semibold text-yellow-400 mb-4">To Watch</h2>
+        <button 
+          onClick={suggestMovie} 
+          className="mb-4 px-4 py-2 rounded-lg bg-blue-500 hover:bg-blue-700 text-white font-semibold transition-all duration-300"
+        >
+          Suggest a Movie
+        </button>
+        {suggestedMovie && (
+          <div className="mb-6 p-4 bg-gray-800 rounded-2xl text-center">
+            <h3 className="text-lg font-bold text-yellow-300">Suggested Movie: {suggestedMovie.title}</h3>
           </div>
-        ))}
+        )}
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+          {movies.filter(movie => !movie.watched && movie.title.toLowerCase().includes(search.toLowerCase())).map((movie) => (
+            <div key={movie.id} className="bg-gray-800 p-4 rounded-2xl shadow-lg transition transform hover:scale-105">
+              {movie.poster_url && (
+                <img src={movie.poster_url} alt={movie.title} className="w-full h-96 object-cover rounded-lg mb-4 shadow-md" />
+              )}
+              <h2 className="text-xl font-semibold text-center text-blue-300">{movie.title}</h2>
+              <p className="text-gray-400 text-sm text-center mb-2">{movie.type}</p>
+              <p className="mt-2 text-justify text-gray-300 text-sm">{movie.description}</p>
+              {movie.imdb_id && (
+                <a href={`https://www.imdb.com/title/${movie.imdb_id}`} target="_blank" rel="noopener noreferrer" className="text-blue-400 hover:underline mt-2 block text-center font-semibold">View on IMDb</a>
+              )}
+              <div className="flex gap-2 mt-4">
+                <button onClick={() => toggleWatched(movie.id)} className="flex-1 px-4 py-2 rounded-lg bg-green-500 hover:bg-green-700 text-white font-semibold transition-all duration-300">Mark as Watched</button>
+                <button onClick={() => deleteMovie(movie.id)} className="px-4 py-2 bg-red-600 hover:bg-red-800 rounded-lg text-white font-semibold">Delete</button>
+              </div>
+            </div>
+          ))}
+        </div>
+        <h2 className="text-2xl font-semibold text-green-400 mt-10 mb-4">Watched Movies</h2>
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 mb-10">
+          {movies.filter(movie => movie.watched && movie.title.toLowerCase().includes(search.toLowerCase())).map((movie) => (
+            <div key={movie.id} className="bg-gray-800 p-4 rounded-2xl shadow-lg transition transform hover:scale-105 opacity-60">
+              {movie.poster_url && (
+                <img src={movie.poster_url} alt={movie.title} className="w-full h-96 object-cover rounded-lg mb-4 shadow-md" />
+              )}
+              <h2 className="text-xl font-semibold text-center text-blue-300">{movie.title}</h2>
+              <p className="text-gray-400 text-sm text-center mb-2">{movie.type}</p>
+              <p className="mt-2 text-justify text-gray-300 text-sm">{movie.description}</p>
+              {movie.imdb_id && (
+                <a href={`https://www.imdb.com/title/${movie.imdb_id}`} target="_blank" rel="noopener noreferrer" className="text-blue-400 hover:underline mt-2 block text-center font-semibold">View on IMDb</a>
+              )}
+              <button onClick={() => toggleWatched(movie.id)} className="mt-4 px-4 py-2 rounded-lg w-full bg-red-500 hover:bg-red-700 text-white font-semibold transition-all duration-300">Mark as Unwatched</button>
+            </div>
+          ))}
+        </div>
       </div>
     </div>
   );
