@@ -175,6 +175,13 @@ const MovieList = () => {
         >
           Suggest a Movie
         </button>
+        {suggestedMovie && (
+          <div className="mb-6 p-4 bg-gray-800 rounded-2xl text-center">
+            <h3 className="text-lg font-bold text-yellow-300">
+              Suggested Movie: {suggestedMovie.title}
+            </h3>
+          </div>
+        )}
 
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
           {filteredMovies.map((movie) => (
@@ -187,9 +194,17 @@ const MovieList = () => {
               <p className="mt-2 text-justify text-gray-300 text-sm">{movie.description}</p>
               <p className="text-gray-300 text-sm mt-2">Genre: {movie.genre}</p>
               <p className="text-gray-300 text-sm">Actors: {movie.actors}</p>
-              <button onClick={() => toggleWatched(movie.id)} className={`flex-1 px-4 py-2 rounded-lg ${movie.watched ? "bg-red-500 hover:bg-red-700" : "bg-green-500 hover:bg-green-700"} text-white font-semibold transition-all duration-300`}>
-                {movie.watched ? "Mark as Unwatched" : "Mark as Watched"}
-              </button>
+              {movie.imdb_id && (
+                <a href={`https://www.imdb.com/title/${movie.imdb_id}`} target="_blank" rel="noopener noreferrer" className="text-blue-400 hover:underline mt-2 block text-center font-semibold">View on IMDb</a>
+              )}
+              <div className="flex gap-2 mt-4">
+                <button onClick={() => toggleWatched(movie.id)} className={`flex-1 px-4 py-2 rounded-lg ${movie.watched ? "bg-red-500 hover:bg-red-700" : "bg-green-500 hover:bg-green-700"} text-white font-semibold transition-all duration-300`}>
+                  {movie.watched ? "Mark as Unwatched" : "Mark as Watched"}
+                </button>
+                <button onClick={() => deleteMovie(movie.id)} className="px-4 py-2 bg-red-600 hover:bg-red-800 rounded-lg text-white font-semibold">
+                  Delete
+                </button>
+              </div>
             </div>
           ))}
         </div>
