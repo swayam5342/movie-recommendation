@@ -39,6 +39,46 @@ const MovieList = () => {
     setUniqueActors([...actors]);
   };
 
+  // Parse ratings from string to JSON object
+  const parseRatings = (ratingsString) => {
+    if (!ratingsString) return [];
+    try {
+      // Replace single quotes with double quotes for valid JSON
+      const validJsonString = ratingsString.replace(/'/g, '"');
+      return JSON.parse(validJsonString);
+    } catch (error) {
+      console.error("Error parsing ratings:", error);
+      return [];
+    }
+  };
+
+  // Get appropriate color for rating based on score
+  const getRatingColor = (source, value) => {
+    if (source === "Rotten Tomatoes") {
+      const percentage = parseInt(value.replace("%", ""));
+      if (percentage >= 90) return "text-green-500";
+      if (percentage >= 70) return "text-green-400";
+      if (percentage >= 60) return "text-yellow-500";
+      return "text-red-500";
+    }
+    
+    if (source === "Internet Movie Database") {
+      const score = parseFloat(value.split("/")[0]);
+      if (score >= 7.5) return "text-green-500";
+      if (score >= 6) return "text-yellow-500";
+      return "text-red-500";
+    }
+    
+    if (source === "Metacritic") {
+      const score = parseInt(value.split("/")[0]);
+      if (score >= 75) return "text-green-500";
+      if (score >= 60) return "text-yellow-500";
+      return "text-red-500";
+    }
+    
+    return "text-gray-400";
+  };
+
   const toggleWatched = async (id) => {
     await fetch(`http://localhost:8000/movies/${id}/watched`, { method: "PUT" });
     fetchMovies();
@@ -61,14 +101,19 @@ const MovieList = () => {
     if (toWatchMovies.length > 0) {
       const randomMovie = toWatchMovies[Math.floor(Math.random() * toWatchMovies.length)];
       setSuggestedMovie(randomMovie);
+      
+      // Scroll to top to ensure suggested movie is visible
+      window.scrollTo({ top: 0, behavior: 'smooth' });
     }
   };
 
   const handleActorInputChange = (e) => {
     const value = e.target.value.toLowerCase();
     setActorInput(e.target.value);
-
+    
+    // Reset selectedActor if input is cleared
     if (value.trim() === "") {
+      setSelectedActor("");
       setActorSuggestions([]);
     } else {
       setActorSuggestions(
@@ -80,6 +125,13 @@ const MovieList = () => {
   const selectActor = (actor) => {
     setSelectedActor(actor);
     setActorInput(actor);
+    setActorSuggestions([]);
+  };
+  
+  // Clear actor filter function
+  const clearActorFilter = () => {
+    setSelectedActor("");
+    setActorInput("");
     setActorSuggestions([]);
   };
 
@@ -129,15 +181,25 @@ const MovieList = () => {
           </select>
 
           <div className="relative">
-            <input
-              type="text"
-              placeholder="Search Actor..."
-              className="p-2 rounded bg-gray-700 text-white focus:outline-none w-48"
-              value={actorInput}
-              onChange={handleActorInputChange}
-            />
+            <div className="flex">
+              <input
+                type="text"
+                placeholder="Search Actor..."
+                className="p-2 rounded-l bg-gray-700 text-white focus:outline-none w-48"
+                value={actorInput}
+                onChange={handleActorInputChange}
+              />
+              {selectedActor && (
+                <button 
+                  onClick={clearActorFilter}
+                  className="bg-gray-700 text-gray-400 hover:text-white px-2 rounded-r"
+                >
+                  ✕
+                </button>
+              )}
+            </div>
             {actorSuggestions.length > 0 && (
-              <ul className="absolute bg-gray-800 border border-gray-700 rounded-lg mt-1 w-48 max-h-40 overflow-y-auto">
+              <ul className="absolute bg-gray-800 border border-gray-700 rounded-lg mt-1 w-48 max-h-40 overflow-y-auto z-10">
                 {actorSuggestions.map((actor) => (
                   <li
                     key={actor}
@@ -198,6 +260,24 @@ const MovieList = () => {
                   </span>
                 </div>
                 <p className="text-gray-400 text-sm mb-2">{suggestedMovie.type}</p>
+                
+                {/* Ratings section */}
+                {suggestedMovie.ratings && (
+                  <div className="mt-2 mb-4">
+                    <h4 className="text-lg font-semibold text-blue-300 mb-1">Ratings</h4>
+                    <div className="flex flex-wrap gap-2">
+                      {parseRatings(suggestedMovie.ratings).map((rating, index) => (
+                        <div key={index} className="bg-gray-700 rounded-lg px-3 py-1 inline-flex items-center">
+                          <span className="text-sm text-gray-300 mr-2">{rating.Source}:</span>
+                          <span className={`text-sm font-bold ${getRatingColor(rating.Source, rating.Value)}`}>
+                            {rating.Value}
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+                
                 <p className="mt-2 text-justify text-gray-300">{suggestedMovie.description}</p>
                 <p className="text-gray-300 mt-2">Genre: {suggestedMovie.genre}</p>
                 <p className="text-gray-300">Actors: {suggestedMovie.actors}</p>
