@@ -7,8 +7,8 @@ const MovieList = () => {
   const [suggestedMovie, setSuggestedMovie] = useState(null);
   const [selectedGenre, setSelectedGenre] = useState("");
   const [selectedActor, setSelectedActor] = useState("");
-  const [actorInput, setActorInput] = useState(""); // Input field for actor search
-  const [actorSuggestions, setActorSuggestions] = useState([]); // Suggested actors
+  const [actorInput, setActorInput] = useState(""); 
+  const [actorSuggestions, setActorSuggestions] = useState([]);
   const [selectedStatus, setSelectedStatus] = useState("all");
   const [uniqueGenres, setUniqueGenres] = useState([]);
   const [uniqueActors, setUniqueActors] = useState([]);
@@ -79,8 +79,8 @@ const MovieList = () => {
 
   const selectActor = (actor) => {
     setSelectedActor(actor);
-    setActorInput(actor); // Show selected actor in input
-    setActorSuggestions([]); // Hide suggestions
+    setActorInput(actor);
+    setActorSuggestions([]);
   };
 
   const filteredMovies = movies.filter((movie) => {
@@ -168,18 +168,59 @@ const MovieList = () => {
       </nav>
 
       <div className="pt-20">
-        <h2 className="text-2xl font-semibold text-yellow-400 mb-4">Movies</h2>
-        <button 
-          onClick={suggestMovie} 
-          className="mb-4 px-4 py-2 rounded-lg bg-blue-500 hover:bg-blue-700 text-white font-semibold transition-all duration-300"
-        >
-          Suggest a Movie
-        </button>
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="text-2xl font-semibold text-yellow-400">Movies</h2>
+          <button 
+            onClick={suggestMovie} 
+            className="px-4 py-2 rounded-lg bg-blue-500 hover:bg-blue-700 text-white font-semibold transition-all duration-300"
+          >
+            Suggest a Movie
+          </button>
+        </div>
+
         {suggestedMovie && (
-          <div className="mb-6 p-4 bg-gray-800 rounded-2xl text-center">
-            <h3 className="text-lg font-bold text-yellow-300">
-              Suggested Movie: {suggestedMovie.title}
-            </h3>
+          <div className="mb-6 p-4 bg-gray-800 rounded-2xl shadow-lg border-2 border-yellow-400 transform transition-all duration-500">
+            <div className="flex flex-col md:flex-row gap-6">
+              {suggestedMovie.poster_url && (
+                <img 
+                  src={suggestedMovie.poster_url} 
+                  alt={suggestedMovie.title} 
+                  className="w-full md:w-64 h-auto object-cover rounded-lg shadow-md" 
+                />
+              )}
+              <div className="flex-1">
+                <div className="flex justify-between items-center mb-2">
+                  <h3 className="text-2xl font-bold text-yellow-300">
+                    {suggestedMovie.title}
+                  </h3>
+                  <span className="bg-yellow-500 text-black px-3 py-1 rounded-full text-sm font-bold">
+                    Suggested for you!
+                  </span>
+                </div>
+                <p className="text-gray-400 text-sm mb-2">{suggestedMovie.type}</p>
+                <p className="mt-2 text-justify text-gray-300">{suggestedMovie.description}</p>
+                <p className="text-gray-300 mt-2">Genre: {suggestedMovie.genre}</p>
+                <p className="text-gray-300">Actors: {suggestedMovie.actors}</p>
+                {suggestedMovie.imdb_id && (
+                  <a 
+                    href={`https://www.imdb.com/title/${suggestedMovie.imdb_id}`} 
+                    target="_blank" 
+                    rel="noopener noreferrer" 
+                    className="text-blue-400 hover:underline mt-2 inline-block font-semibold"
+                  >
+                    View on IMDb
+                  </a>
+                )}
+                <div className="flex gap-2 mt-4">
+                  <button 
+                    onClick={() => toggleWatched(suggestedMovie.id)} 
+                    className="flex-1 px-4 py-2 rounded-lg bg-green-500 hover:bg-green-700 text-white font-semibold transition-all duration-300"
+                  >
+                    Mark as Watched
+                  </button>
+                </div>
+              </div>
+            </div>
           </div>
         )}
 
