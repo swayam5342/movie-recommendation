@@ -219,6 +219,11 @@ const MovieList = () => {
             className="p-2 rounded bg-gray-700 text-white focus:outline-none"
             value={newMovie}
             onChange={(e) => setNewMovie(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter" && newMovie.trim()) {
+                addMovie();
+              }
+            }}
           />
           <button
             onClick={addMovie}
