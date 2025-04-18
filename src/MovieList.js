@@ -11,13 +11,11 @@ const MovieList = ({
 }) => {
   const [movies, setMovies] = useState([]);
   const [suggestedMovie, setSuggestedMovie] = useState(null);
-  const [isRandomOrder, setIsRandomOrder] = useState(true); // Default to random order
   const newMovieProcessedRef = useRef(false);
 
   useEffect(() => {
     fetchMovies();
   }, []);
-
   useEffect(() => {
     // Process new movie addition when newMovieToAdd changes and is not null
     if (newMovieToAdd && !newMovieProcessedRef.current) {
@@ -113,15 +111,8 @@ const MovieList = ({
     if (toWatchMovies.length > 0) {
       const randomMovie = toWatchMovies[Math.floor(Math.random() * toWatchMovies.length)];
       setSuggestedMovie(randomMovie);
-      
-      // Scroll to top to ensure suggested movie is visible
       window.scrollTo({ top: 0, behavior: 'smooth' });
     }
-  };
-
-  // Toggle random order function
-  const toggleRandomOrder = () => {
-    setIsRandomOrder(!isRandomOrder);
   };
 
   const filteredMovies = movies.filter((movie) => {
@@ -132,9 +123,6 @@ const MovieList = ({
       (selectedStatus === "all" ? true : selectedStatus === "watched" ? movie.watched : !movie.watched)
     );
   });
-  const displayMovies = isRandomOrder 
-    ? [...filteredMovies].sort(() => Math.random() - 0.5) 
-    : filteredMovies;
 
   return (
     <div className="container mx-auto px-6">
@@ -142,12 +130,6 @@ const MovieList = ({
       <div className="flex items-center justify-between mb-6">
         <h2 className="text-2xl font-semibold text-yellow-400">Movies</h2>
         <div className="flex gap-4">
-          <button 
-            onClick={toggleRandomOrder} 
-            className={`px-4 py-2 rounded-lg ${isRandomOrder ? "bg-purple-600 hover:bg-purple-800" : "bg-gray-600 hover:bg-gray-700"} text-white font-semibold transition-all duration-300`}
-          >
-            {isRandomOrder ? "Random Order: ON" : "Random Order: OFF"}
-          </button>
           <button 
             onClick={suggestMovie} 
             className="px-4 py-2 rounded-lg bg-blue-500 hover:bg-blue-700 text-white font-semibold transition-all duration-300"
@@ -221,11 +203,10 @@ const MovieList = ({
           </div>
         </div>
       )}
-
       {/* Movie grid */}
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-        {displayMovies.length > 0 ? (
-          displayMovies.map((movie) => (
+        {filteredMovies.length > 0 ? (
+          filteredMovies.map((movie) => (
             <div key={movie.id} className={`bg-gray-800 p-4 rounded-2xl shadow-lg transition transform hover:scale-105 ${movie.watched ? "opacity-60" : ""}`}>
               {movie.poster_url && (
                 <img src={movie.poster_url} alt={movie.title} className="w-full h-96 object-cover rounded-lg mb-4 shadow-md" />
